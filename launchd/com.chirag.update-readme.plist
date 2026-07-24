@@ -9,12 +9,12 @@
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/Users/Chirag/Desktop/Cron/scripts/update_readme.py</string>
+        <string>/Users/Chirag/Cron/scripts/update_readme.py</string>
         <string>--verbose</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/Chirag/Desktop/Cron</string>
+    <string>/Users/Chirag/Cron</string>
 
     <!-- 09:30 local time, every day. launchd fires this on wake if the slot
          was missed while the machine was asleep or powered off. -->
