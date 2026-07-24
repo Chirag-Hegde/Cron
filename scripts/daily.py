@@ -172,6 +172,13 @@ def main(argv: list[str] | None = None) -> int:
                         help="skip syncing with origin")
     parser.add_argument("--commit", metavar="MSG",
                         help="commit ALREADY-STAGED changes with MSG and push")
+    parser.add_argument("--queue", metavar="MSG",
+                        help="commit ALREADY-STAGED changes locally WITHOUT "
+                             "pushing -- adds to the release queue")
+    parser.add_argument("--release", action="store_true",
+                        help="push exactly one queued commit (the oldest)")
+    parser.add_argument("--queue-status", action="store_true",
+                        help="list commits waiting to be released")
     args = parser.parse_args(argv)
 
     name = args.repo or rotate.pick(__import__("datetime").date.today())
@@ -184,6 +191,41 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.no_pull:
         git(repo, "pull", "--rebase", "--autostash")
+
+    if args.queue_status or args.release:
+        branch = default_branch(repo)
+        git(repo, "fetch", "--quiet", "origin", check=False)
+        pending = [c for c in git(
+            repo, "rev-list", "--reverse",
+            "origin/{}..HEAD".format(branch)).splitlines() if c]
+
+        if args.queue_status:
+            print("{}: {} commit(s) queued for release".format(name, len(pending)))
+            for sha in pending:
+                print("  {}".format(git(repo, "log", "-1", "--oneline", sha)))
+            return 0
+
+        if not pending:
+            print("Queue empty for {}. Nothing to release.".format(name))
+            return 0
+
+        # Push only the oldest. `sha:branch` advances the remote to exactly
+        # that commit, leaving the rest queued for subsequent days.
+        oldest = pending[0]
+        git(repo, "push", "origin", "{}:{}".format(oldest, branch))
+        print("released: {}".format(git(repo, "log", "-1", "--oneline", oldest)))
+        print("{} commit(s) still queued".format(len(pending) - 1))
+        return 0
+
+    if args.queue:
+        staged = git(repo, "diff", "--cached", "--name-only")
+        if not staged:
+            print("Nothing staged in {}.".format(repo), file=sys.stderr)
+            return 1
+        git(repo, "commit", "-m", args.queue)
+        print("queued (not pushed): {}".format(
+            git(repo, "log", "-1", "--oneline")))
+        return 0
 
     if args.commit:
         staged = git(repo, "diff", "--cached", "--name-only")

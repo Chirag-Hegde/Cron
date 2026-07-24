@@ -5,13 +5,15 @@
     <key>Label</key>
     <string>com.chirag.daily-prep</string>
 
-    <!-- Syncs this week's rotation repo and lists real, fixable defects in it.
-         Deliberately has no --commit: it only ever reports. The decision about
-         what to change is a human's, so nothing here can push. -->
+    <!-- Releases ONE already-reviewed commit from the queue in this week's
+         rotation repo. It cannot invent a change: it only pushes work a human
+         already wrote and approved during the Monday session. An empty queue
+         is a no-op that exits 0, not an error. -->
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
         <string>/Users/Chirag/Cron/scripts/daily.py</string>
+        <string>--release</string>
     </array>
 
     <key>WorkingDirectory</key>
