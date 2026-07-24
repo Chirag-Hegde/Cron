@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.chirag.daily-prep</string>
+
+    <!-- Syncs this week's rotation repo and lists real, fixable defects in it.
+         Deliberately has no --commit: it only ever reports. The decision about
+         what to change is a human's, so nothing here can push. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/Chirag/Cron/scripts/daily.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/Chirag/Cron</string>
+
+    <!-- 09:35, five minutes after the Cron timestamp job, so the two never
+         interleave in the shared log directory. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>35</integer>
+    </dict>
+
+    <!-- launchd's environment is nearly empty: without PATH it cannot find
+         git, and without HOME git reads no config and ssh finds no key. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/Chirag</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/Chirag/logs/daily-prep.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/Chirag/logs/daily-prep.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
