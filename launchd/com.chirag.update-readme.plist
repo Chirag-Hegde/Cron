@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.chirag.update-readme</string>
+
+    <!-- Absolute interpreter and script path: launchd has no cwd you can rely on. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/Chirag/Desktop/Cron/scripts/update_readme.py</string>
+        <string>--verbose</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/Chirag/Desktop/Cron</string>
+
+    <!-- 09:30 local time, every day. launchd fires this on wake if the slot
+         was missed while the machine was asleep or powered off. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- The launchd environment is nearly empty; git and ssh are not found
+         without an explicit PATH, and git needs HOME to read ~/.gitconfig. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/Chirag</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/Chirag/logs/update-readme.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/Chirag/logs/update-readme.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

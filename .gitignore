@@ -1,0 +1,16 @@
+# Scheduler logs. The launchd job writes to ~/logs (outside the repo), but this
+# keeps a local logs/ directory untracked if one is ever created here.
+logs/
+*.log
+
+# Never track key material.
+*.pem
+id_ed25519*
+id_rsa*
+
+# macOS noise
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
