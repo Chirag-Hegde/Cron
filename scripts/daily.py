@@ -110,6 +110,57 @@ def find_whitespace_issues(repo: Path, files: list[str]) -> list[str]:
     return hits
 
 
+def fix_whitespace(repo: Path, targets: list[str]) -> int:
+    """Strip trailing whitespace / add final newlines, in Python, then prove
+    the result differs from HEAD by whitespace alone before staging.
+
+    Done in Python deliberately. The obvious shell one-liner,
+    `sed -i '' 's/[ \\t]*$//'`, silently corrupts source on macOS: BSD sed does
+    not expand \\t inside a bracket expression, so `[ \\t]` matches the literal
+    letter 't' and eats it off the end of any line ending in 't'.
+
+    Markdown is excluded -- two trailing spaces are a meaningful line break --
+    and .ipynb is excluded because it is JSON that whitespace edits corrupt.
+    """
+    skip_suffixes = {".md", ".markdown", ".ipynb"}
+    changed = []
+    for rel in targets:
+        p = repo / rel
+        if p.suffix.lower() in skip_suffixes or not p.is_file():
+            continue
+        try:
+            original = p.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        fixed = "".join(
+            line.rstrip(" \t\r") + "\n" for line in original.splitlines()
+        )
+        if fixed != original:
+            p.write_text(fixed, encoding="utf-8")
+            changed.append(rel)
+
+    if not changed:
+        print("Nothing to fix.")
+        return 0
+
+    # The gate. `git diff -w` ignores whitespace, so an empty result proves
+    # nothing but whitespace moved. If it is non-empty we mangled something --
+    # restore and refuse rather than stage a corrupted file.
+    residual = git(repo, "diff", "-w", "--", *changed)
+    if residual:
+        git(repo, "checkout", "--", *changed)
+        print("ABORTED: edit changed more than whitespace. Files restored.\n"
+              + residual[:2000], file=sys.stderr)
+        return 1
+
+    git(repo, "add", "--", *changed)
+    print("fixed and staged ({} file(s), verified whitespace-only):".format(
+        len(changed)))
+    for c in changed:
+        print("    {}".format(c))
+    return 0
+
+
 def report(repo: Path, name: str) -> int:
     files = [f for f in git(repo, "ls-files").splitlines() if f]
     branch = default_branch(repo)
@@ -179,6 +230,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="push exactly one queued commit (the oldest)")
     parser.add_argument("--queue-status", action="store_true",
                         help="list commits waiting to be released")
+    parser.add_argument("--fix-whitespace", nargs="+", metavar="FILE",
+                        help="safely strip trailing whitespace / add final "
+                             "newlines, then stage (verified whitespace-only)")
     args = parser.parse_args(argv)
 
     name = args.repo or rotate.pick(__import__("datetime").date.today())
@@ -191,6 +245,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.no_pull:
         git(repo, "pull", "--rebase", "--autostash")
+
+    if args.fix_whitespace:
+        return fix_whitespace(repo, args.fix_whitespace)
 
     if args.queue_status or args.release:
         branch = default_branch(repo)
