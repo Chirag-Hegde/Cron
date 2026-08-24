@@ -6,4 +6,4 @@ Daily automated README timestamp, committed and pushed by
 The script rewrites the single line below in place, so running it more than
 once in a day makes no second commit.
 
-<!-- updated --> Last updated: 2026-08-23
+<!-- updated --> Last updated: 2026-08-24
